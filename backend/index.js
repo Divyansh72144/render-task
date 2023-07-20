@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static("build"));
 const password = process.argv[2];
-
+const mongoose = require("mongoose");
 const uri = `mongodb+srv://Divyansh:${password}@divyansh.jvjpnhx.mongodb.net/phonebook?retryWrites=true&w=majority`;
 
 const Person = require("./models/person");
