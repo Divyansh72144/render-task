@@ -2,10 +2,15 @@ const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors"); //authorize
-
+require("dotenv").config();
 app.use(express.json());
 app.use(cors());
 app.use(express.static("build"));
+const password = process.argv[2];
+
+const uri = `mongodb+srv://Divyansh:${password}@divyansh.jvjpnhx.mongodb.net/phonebook?retryWrites=true&w=majority`;
+
+const Person = require("./models/person");
 
 let persons = [
   {
@@ -47,7 +52,9 @@ app.use(
 // });
 
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((people) => {
+    response.json(people);
+  });
 });
 
 app.get("/info", (request, response) => {
