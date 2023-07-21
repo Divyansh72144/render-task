@@ -75,12 +75,24 @@ app.get("/api/person/:id", (request, response) => {
 });
 
 app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  persons = persons.filter((person) => person.id !== id);
+  // const id = Number(request.params.id);
+  // persons = persons.filter((person) => person.id !== id);
 
-  response.status(204).end();
+  // response.status(204).end();
+  const id = request.params.id;
+  Person.findByIdAndRemove(id)
+    .then((removedPerson) => {
+      if (removedPerson) {
+        response.status(204).end();
+      } else {
+        response.status(404).json({ error: "Person not found" });
+      }
+    })
+    .catch((error) => {
+      console.error("error deleting person", error);
+      response.status(500).json({ error: "Failed to delete the person" });
+    });
 });
-
 app.post("/api/persons", (request, response) => {
   const body = request.body;
 
@@ -89,25 +101,40 @@ app.post("/api/persons", (request, response) => {
       error: "content missing",
     });
   }
-  const person = new Person({
-    name: body.name,
-    number: body.number,
-  });
 
-  person
-    .save()
-    .then((savedPerson) => {
-      response.json(savedPerson);
-    })
-    .catch((error) => {
-      response.status(500).json({ error: "Failed to save the person", error });
+  Person.findOneAndUpdate({ name: body.name }),
+    { number: body.number },
+    { new: true, upsert: true }.then((existingPerson) => {
+      if (existingPerson) {
+        existingPerson.number = body.number;
+        existingPerson
+          .save()
+          .then((updatedPerson) => {
+            response.json(updatedPerson);
+          })
+          .catch((error) => {
+            response
+              .status(500)
+              .json({ error: "Failed to update the person", error });
+          });
+      } else {
+        const person = new Person({
+          name: body.name,
+          number: body.number,
+        });
+
+        person
+          .save()
+          .then((savedPerson) => {
+            response.json(savedPerson);
+          })
+          .catch((error) => {
+            response
+              .status(500)
+              .json({ error: "Failed to save the person", error });
+          });
+      }
     });
-  // persons.push(person);
-
-  // response.json(person);
-
-  // person.save().then((savedPerson) => {
-  //   response.json(savedNote);
 });
 
 const PORT = process.env.PORT || 3001;
