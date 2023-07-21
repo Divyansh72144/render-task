@@ -12,29 +12,6 @@ const uri = `mongodb+srv://Divyansh:${password}@divyansh.jvjpnhx.mongodb.net/pho
 
 const Person = require("./models/person");
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
 //new token
 morgan.token("postData", (request) => {
   if (request.method == "POST") {
@@ -69,16 +46,32 @@ const generateId = () => {
   return Math.floor(Math.random() * (maxId - minId + 1)) + minId;
 };
 app.get("/api/person/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((person) => {
-    console.log(person.id, typeof person.id, id, typeof id, person.id === id);
-    return person.id === id;
-  });
-  if (person) {
-    response.json(person);
-  } else {
-    response.status(404).end();
-  }
+  const id = request.params.id;
+  Person.findById(id)
+    .then((person) => {
+      if (person) {
+        response.json(person);
+      } else {
+        response.status(404).json({ error: "Person not found" });
+      }
+    })
+    .catch((error) => {
+      response.status(400).json({ error: "Invalid ID format" });
+    });
+
+  // const id = Number(request.params.id);
+  // const person = persons.find((person) => {
+  //   console.log(person.id, typeof person.id, id, typeof id, person.id === id);
+  //   return person.id === id;
+  // });
+  // if (person) {
+  //   response.json(person);
+  // } else {
+  //   response.status(404).end();
+  // }
+  // Person.findById(request.params.id).then((person) => {
+  //   response.json(person);
+  // });
 });
 
 app.delete("/api/persons/:id", (request, response) => {
@@ -96,22 +89,25 @@ app.post("/api/persons", (request, response) => {
       error: "content missing",
     });
   }
-
-  const existingPerson = persons.find((person) => person.name === body.name);
-  if (existingPerson) {
-    return response.status(400).json({
-      error: "name must be unique",
-    });
-  }
-  const person = {
+  const person = new Person({
     name: body.name,
     number: body.number,
-    id: generateId(),
-  };
+  });
 
-  persons.push(person);
+  person
+    .save()
+    .then((savedPerson) => {
+      response.json(savedPerson);
+    })
+    .catch((error) => {
+      response.status(500).json({ error: "Failed to save the person", error });
+    });
+  // persons.push(person);
 
-  response.json(person);
+  // response.json(person);
+
+  // person.save().then((savedPerson) => {
+  //   response.json(savedNote);
 });
 
 const PORT = process.env.PORT || 3001;
