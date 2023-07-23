@@ -94,6 +94,22 @@ app.delete("/api/persons/:id", (request, response) => {
     });
 });
 
+app.put("/api/persons/:id", (req, res, next) => {
+  //taking the id's data into body
+  const body = req.body;
+  //creating person object and putting body's valus innit
+  const person = {
+    name: body.name,
+    number: body.number,
+  };
+  //{} inside this all things you want to update
+  Person.findByIdAndUpdate(req.params.id, person, { number: body.number })
+    .then((updatedPerson) => {
+      res.json(updatedPerson.toJSON());
+    })
+    .catch((error) => next(error));
+});
+
 app.post("/api/persons", (request, response) => {
   const body = request.body;
 
@@ -115,6 +131,7 @@ app.post("/api/persons", (request, response) => {
     .catch((error) => {
       response.status(500).json({ error: "Failed to save the person", error });
     });
+
   // persons.push(person);
 
   // response.json(person);
