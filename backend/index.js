@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static("build"));
 const password = process.argv[2];
-const mongoose = require("mongoose");
+
 const uri = `mongodb+srv://Divyansh:${password}@divyansh.jvjpnhx.mongodb.net/phonebook?retryWrites=true&w=majority`;
 
 const Person = require("./models/person");
@@ -93,6 +93,7 @@ app.delete("/api/persons/:id", (request, response) => {
       response.status(500).json({ error: "Failed to delete the person" });
     });
 });
+
 app.post("/api/persons", (request, response) => {
   const body = request.body;
 
@@ -101,40 +102,25 @@ app.post("/api/persons", (request, response) => {
       error: "content missing",
     });
   }
+  const person = new Person({
+    name: body.name,
+    number: body.number,
+  });
 
-  Person.findOneAndUpdate({ name: body.name }),
-    { number: body.number },
-    { new: true, upsert: true }.then((existingPerson) => {
-      if (existingPerson) {
-        existingPerson.number = body.number;
-        existingPerson
-          .save()
-          .then((updatedPerson) => {
-            response.json(updatedPerson);
-          })
-          .catch((error) => {
-            response
-              .status(500)
-              .json({ error: "Failed to update the person", error });
-          });
-      } else {
-        const person = new Person({
-          name: body.name,
-          number: body.number,
-        });
-
-        person
-          .save()
-          .then((savedPerson) => {
-            response.json(savedPerson);
-          })
-          .catch((error) => {
-            response
-              .status(500)
-              .json({ error: "Failed to save the person", error });
-          });
-      }
+  person
+    .save()
+    .then((savedPerson) => {
+      response.json(savedPerson);
+    })
+    .catch((error) => {
+      response.status(500).json({ error: "Failed to save the person", error });
     });
+  // persons.push(person);
+
+  // response.json(person);
+
+  // person.save().then((savedPerson) => {
+  //   response.json(savedNote);
 });
 
 const PORT = process.env.PORT || 3001;
